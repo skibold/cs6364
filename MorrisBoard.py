@@ -51,8 +51,8 @@ class Board:
         if type(v) is int:
             v = self.node_at(v)
         assert type(v) is str, "Unrecognized node {}".format(v)
-        e = self.df[self.df.src==v]['dest'].to_list()  # out edges
-        e.extend(self.df[self.df.dest==v]['src'].to_list())  # in edges
+        e = list(self.df[self.df.src==v]['dest'])  # out edges
+        e.extend(list(self.df[self.df.dest==v]['src']))  # in edges
         return set(e)
 
     def piece_at(self, v):
@@ -114,15 +114,16 @@ class Board:
 
     def gen_hop_4_white(self):
         pos = self.get_pos()
-        for i, p in enumerate(pos):
+        for i, p in enumerate(pos):  # todo this could be done faster
             if p == 'W':
-                for j, q in enumerate(pos):
+                for j, q in enumerate(pos):  # todo this could be done faster
                     if i == j:
                         continue
                     if q == 'x':
                         rv = list(pos)
                         rv[i] = 'x'
                         rv[j] = 'W'
+                        print("hop {} -> {}".format(self.node_at(i), self.node_at(j)))
                         newp = ''.join(rv)
                         if self.close_mill(j, newp):
                             for newnewp in self.remove_piece(j, newp):
