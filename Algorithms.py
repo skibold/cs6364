@@ -69,3 +69,13 @@ def minmax(board, pos, curr_d, max_d, static_func, gen_func):
             min_pos = child_pos
     print("{}{} {}".format("\t" * curr_d, min_score, min_pos))
     return min_pos, min_score
+
+
+def maxmin_ab(board, pos, curr_d, max_d, static_func, gen_func, a, b):
+    pass  # todo
+
+
+def minmax_ab(board, pos, curr_d, max_d, static_func, gen_func, a, b):
+    pass  # todo
+
+
