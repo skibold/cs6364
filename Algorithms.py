@@ -33,12 +33,17 @@ def write_output(pos, filename):
         fout.write(pos)
 
 
-def maxmin(board, pos, curr_d, max_d, static_func, gen_func):
-    print("{}maxmin {} {} {}".format("\t"*curr_d, pos, curr_d, max_d))
+def check_leaf_node(board, pos, curr_d, max_d, static_func):
     if curr_d == max_d or board.num_white(pos) == 2 or board.num_black(pos) == 2:  # leaf node
         increment_count()
         score = static_func(board, pos)
         print("{}{}".format("\t"*curr_d, score))
+        return score
+
+def maxmin(board, pos, curr_d, max_d, static_func, gen_func):
+    print("{}maxmin {} {} {}".format("\t"*curr_d, pos, curr_d, max_d))
+    score = check_leaf_node(board, pos, curr_d, max_d, static_func)
+    if score is not None:
         return pos, score
 
     max_score = -100000
@@ -54,10 +59,8 @@ def maxmin(board, pos, curr_d, max_d, static_func, gen_func):
 
 def minmax(board, pos, curr_d, max_d, static_func, gen_func):
     print("{}minmax {} {} {}".format("\t"*curr_d, pos, curr_d, max_d))
-    if curr_d == max_d or board.num_white(pos) == 2 or board.num_black(pos) == 2:  # leaf node
-        increment_count()
-        score = static_func(board, pos)
-        print("{}{}".format("\t" * curr_d, score))
+    score = check_leaf_node(board, pos, curr_d, max_d, static_func)
+    if score is not None:
         return pos, score
 
     min_score = 100000
@@ -72,10 +75,46 @@ def minmax(board, pos, curr_d, max_d, static_func, gen_func):
 
 
 def maxmin_ab(board, pos, curr_d, max_d, static_func, gen_func, a, b):
-    pass  # todo
+    print("{}maxmin_ab {} {} {} {} {}".format("\t"*curr_d, pos, curr_d, max_d, a, b))
+    score = check_leaf_node(board, pos, curr_d, max_d, static_func)
+    if score is not None:
+        return pos, score
+
+    max_score = -100000
+    max_pos = ""
+    for _, child_pos in gen_func(board, pos, curr_d):
+        _, score = minmax_ab(board, child_pos, curr_d+1, max_d, static_func, gen_func, a, b)
+        if score > max_score:
+            max_score = score
+            max_pos = child_pos
+        if max_score >= b:
+            print("{}beta cut {} {} {}".format("\t"*curr_d, b, max_score, max_pos))
+            return max_pos, max_score
+        else:
+            a = max([max_score, a])
+    print("{}{} {}".format("\t"*curr_d, max_score, max_pos))
+    return max_pos, max_score
 
 
 def minmax_ab(board, pos, curr_d, max_d, static_func, gen_func, a, b):
-    pass  # todo
+    print("{}minmax_ab {} {} {} {} {}".format("\t" * curr_d, pos, curr_d, max_d, a, b))
+    score = check_leaf_node(board, pos, curr_d, max_d, static_func)
+    if score is not None:
+        return pos, score
+
+    min_score = 100000
+    min_pos = ""
+    for _, child_pos in gen_func(board, pos, curr_d):
+        _, score = maxmin_ab(board, child_pos, curr_d+1, max_d, static_func, gen_func, a, b)
+        if score < min_score:
+            min_score = score
+            min_pos = child_pos
+        if min_score <= a:
+            print("{}alpha cut {} {} {}".format("\t"*curr_d, a, min_score, min_pos))
+            return min_pos, min_score
+        else:
+            b = min([min_score, b])
+    print("{}{} {}".format("\t"*curr_d, min_score, min_pos))
+    return min_pos, min_score
 
 
