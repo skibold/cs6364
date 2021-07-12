@@ -1,0 +1,2 @@
+requirements.txt contains 3 libraries I used that aren't standard with python.  You may have them already.  If not just run pip install -r requirements.txt
+runall.sh will run all 8 python programs.  Just give it the input file name and depth.  The outputs will be named after the respective python program.

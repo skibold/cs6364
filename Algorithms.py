@@ -28,7 +28,7 @@ def optargs(args):
     inp, outp, depth = args[1:4]
     with open(inp) as fin:
         start_pos = fin.read()
-    return start_pos, outp, depth
+    return start_pos.strip(), outp, int(depth)
 
 
 def write_output(pos, filename):
