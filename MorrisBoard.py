@@ -4,6 +4,7 @@
 
 import numpy as np
 import pandas as pd
+import networkx as nx
 
 
 class Board:
@@ -16,6 +17,47 @@ class Board:
 
     def __init__(self):
         self.df = pd.DataFrame({"src": self.src, "dest": self.dest})
+        self.mill_mat = np.zeros([len(self.mills), len(self.pos_lut)])
+        for i, mill in enumerate(self.mills):
+            n = [self.pos_lut.index(m) for m in mill]
+            self.mill_mat[i][n] = 1
+
+        self.mill_dict = {}
+        for n in self.pos_lut:
+            self.mill_dict[n] = []
+            for i, m in enumerate(self.mills):
+                if n in m:
+                    self.mill_dict[n].append(i)
+
+        self.mill_graph = self.mk_mill_graph()
+
+    def mk_mill_graph(self):
+        edges = {}
+        for m in self.mills:
+            for mi in m:
+                for n in self.neighbors(mi):
+                    for mj in self.mill_dict[n]:
+                        src = ''.join(m)
+                        dest = ''.join(self.mills[mj])
+                        if src != dest and len(set(m).intersection(self.mills[mj])) == 0:
+                            e1 = (''.join(m), ''.join(self.mills[mj]))
+                            e2 = (''.join(self.mills[mj]), ''.join(m))
+                            if e1 in edges:  # and (mi, n) not in edges[e1]['nodes']:
+                                if not ((mi, n) in edges[e1]['nodes'] or (n, mi) in edges[e1]['nodes']):
+                                    edges[e1]['weight'] += 1
+                                    edges[e1]['nodes'].append((mi, n))
+                            elif e2 in edges:  # and (n, mi) not in edges[e2]['nodes']:
+                                if not ((mi, n) in edges[e2]['nodes'] or (n, mi) in edges[e2]['nodes']):
+                                    edges[e2]['weight'] += 1
+                                    edges[e2]['nodes'].append((n, mi))
+                            else:
+                                edges[(''.join(m), ''.join(self.mills[mj]))] = {'weight': 1, 'nodes': [(mi, n)]}
+        dod = {}
+        for k, v in edges.items():
+            if k[0] not in dod:
+                dod[k[0]] = {}
+            dod[k[0]][k[1]] = v
+        return nx.from_dict_of_dicts(dod)
 
     def node_at(self, i:int):
         assert i<len(self.pos_lut), "Only {} positions; {} is out of range.".format(len(self.pos_lut), i)
@@ -120,6 +162,16 @@ class Board:
             yield j, self.invert_pos(p)
 
     def close_mill(self, i, pos):
+        if pos[i] == 'x':
+            return False
+        val = pos[i]
+        ipos = np.array([1 if j == val else 0 for j in pos])
+        loc = np.where(self.mill_mat[:, i] == 1)[0]
+        return np.any(np.matmul(self.mill_mat[loc], ipos) == 3)
+
+    def close_mill(self, i, pos):
+        if pos[i] == 'x':
+            return False
         n = self.node_at(i)
         val = pos[i]
         for mill in self.mills:
@@ -153,7 +205,20 @@ class Board:
     def num_black(pos):
         return pos.count('B')
 
+    def num_white_moves(self, pos):
+        nw = self.num_white(pos)
+        if nw <= 2:
+            return 0
+        if nw == 3:
+            return len(list(self.gen_hop_4_white(pos)))
+        return len(list(self.gen_move_4_white(pos)))
+
     def num_black_moves(self, pos):
+        nb = self.num_black(pos)
+        if nb <= 2:
+            return 0
+        if nb == 3:
+            return len(list(self.gen_hop_4_black(pos)))
         return len(list(self.gen_move_4_black(pos)))
 
     def open_estimate_white(self, pos):
@@ -168,8 +233,24 @@ class Board:
             return 10000  # inf, win
         return 1000 * (self.num_white(pos) - self.num_black(pos)) - self.num_black_moves(pos)
 
-    def open_estimate_black(self, pos=None):
+    def open_estimate_black(self, pos):
         return self.open_estimate_white(self.invert_pos(pos))
 
-    def mid_end_estimate_black(self, pos=None):
+    def mid_end_estimate_black(self, pos):
         return self.mid_end_estimate_white(self.invert_pos(pos))
+
+    def mill_status_white(self, pos):
+        int_pos = [1 if j == 'W' else 0 for j in pos]
+        mill_count = np.matmul(self.mill_mat, int_pos)
+        return dict(zip([''.join(m) for m in self.mills], mill_count))
+
+    def mill_status_black(self, pos):
+        return self.mill_status_white(self.invert_pos(pos))
+
+    @staticmethod
+    def parse_mill(mill):
+        return [mill[:2], mill[2:4], mill[4:]]
+
+    @staticmethod
+    def join_mill(mill):
+        return ''.join(mill)

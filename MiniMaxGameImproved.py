@@ -4,9 +4,16 @@ from MorrisBoard import Board
 from Algorithms import *
 
 
-def static_est(board, pos):
-    pass  # todo
-    #return board.mid_end_estimate_white(pos)
+def static_est_white(board, pos):
+    return board.mid_end_estimate_white(pos) + \
+           improved_mid_white(board, pos) + \
+           improved_open_white(board, pos)
+
+
+def static_est_black(board, pos):
+    return board.mid_end_estimate_black(pos) + \
+           improved_mid_black(board, pos) + \
+           improved_open_black(board, pos)
 
 
 def successor(board, pos, d):
@@ -25,7 +32,7 @@ def successor(board, pos, d):
 def move(startpos, depth):
     reset_count()
     board = Board()
-    finalpos, score = maxmin(board, startpos, 0, depth, static_est, successor)
+    finalpos, score = maxmin(board, startpos, 0, depth, static_est_white, successor, False)
     print("Input position: {}, Output position: {}, Positions evaluated by static: {}, MINIMAX estimate: {}".format(startpos, finalpos, get_count(), score))
     return finalpos
 

@@ -34,7 +34,7 @@ def successor(board, pos, d):
 def move(startpos, depth):
     reset_count()
     board = Board()
-    finalpos, score = maxmin(board, startpos, 0, depth, static_est, successor)
+    finalpos, score = maxmin(board, startpos, 0, depth, static_est, successor, True)
     print("Input position: {}, Output position: {}, Positions evaluated by static: {}, MINIMAX estimate: {}".format(startpos, finalpos, get_count(), score))
     return finalpos
 
